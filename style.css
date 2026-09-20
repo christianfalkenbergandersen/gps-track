@@ -385,10 +385,13 @@ main { width: 100vw; max-width: 900px; margin: 0 auto; }
 #map.leaflet-container {
   position: relative !important;
   width: 100% !important;
-  height: 100% !important;
+  height: min(600px, calc(100svh - 310px)) !important;
+  min-height: 340px !important;
   overflow: hidden !important;
   background: #dfe5ea;
 }
+
+/* Keep every Leaflet pane inside the map's own coordinate system. */
 #map .leaflet-map-pane,
 #map .leaflet-tile-pane,
 #map .leaflet-overlay-pane,
@@ -396,45 +399,51 @@ main { width: 100vw; max-width: 900px; margin: 0 auto; }
 #map .leaflet-marker-pane,
 #map .leaflet-tooltip-pane,
 #map .leaflet-popup-pane,
-#map .leaflet-control-container,
-#map .leaflet-top,
-#map .leaflet-bottom {
+#map .leaflet-pane > svg,
+#map .leaflet-pane > canvas,
+#map .leaflet-tile-container,
+#map .leaflet-image-layer,
+#map .leaflet-layer {
   position: absolute !important;
+  left: 0;
+  top: 0;
 }
-#map .leaflet-map-pane {
-  left: 0 !important;
-  top: 0 !important;
-}
-#map .leaflet-tile-pane {
-  left: 0 !important;
-  top: 0 !important;
-}
+
 #map .leaflet-tile-container {
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
+  pointer-events: none;
 }
+
+#map .leaflet-safari .leaflet-tile-container,
+#map.leaflet-safari .leaflet-tile-container {
+  width: 1600px !important;
+  height: 1600px !important;
+  -webkit-transform-origin: 0 0;
+}
+
 #map img.leaflet-tile {
   position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
   display: block !important;
+  width: auto !important;
   max-width: none !important;
   max-height: none !important;
+  padding: 0 !important;
 }
+
 #map .leaflet-overlay-pane svg,
 #map .leaflet-overlay-pane canvas {
-  position: absolute !important;
   max-width: none !important;
   max-height: none !important;
 }
+
 #map .leaflet-control-container {
+  position: absolute !important;
   left: 0 !important;
   top: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
   pointer-events: none !important;
 }
+
 #map .leaflet-control {
   pointer-events: auto !important;
 }
