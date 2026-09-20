@@ -220,7 +220,8 @@
 
 html, body {
   margin: 0;
-  width: 100%;
+  width: 100vw;
+  min-width: 100vw;
   min-height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
@@ -254,7 +255,7 @@ body { padding-bottom: env(safe-area-inset-bottom); overflow-x: hidden; }
 .status-pill.recording .dot { background: #ff3b30; }
 .status-pill.stopped .dot { background: #bbb; }
 
-main { width: 100%; max-width: 900px; margin: 0 auto; }
+main { width: 100vw; max-width: 900px; margin: 0 auto; }
 
 .map-wrap {
   position: relative;
@@ -377,4 +378,63 @@ main { width: 100%; max-width: 900px; margin: 0 auto; }
 
 @media (min-width: 700px) {
   .controls { max-width: 650px; margin: auto; }
+}
+
+/* Hard overrides for the map itself. These are deliberately inline-style-equivalent
+   rules so Leaflet tiles cannot escape the map rectangle on Safari. */
+#map.leaflet-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background: #dfe5ea;
+}
+#map .leaflet-map-pane,
+#map .leaflet-tile-pane,
+#map .leaflet-overlay-pane,
+#map .leaflet-shadow-pane,
+#map .leaflet-marker-pane,
+#map .leaflet-tooltip-pane,
+#map .leaflet-popup-pane,
+#map .leaflet-control-container,
+#map .leaflet-top,
+#map .leaflet-bottom {
+  position: absolute !important;
+}
+#map .leaflet-map-pane {
+  left: 0 !important;
+  top: 0 !important;
+}
+#map .leaflet-tile-pane {
+  left: 0 !important;
+  top: 0 !important;
+}
+#map .leaflet-tile-container {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+}
+#map img.leaflet-tile {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  display: block !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+#map .leaflet-overlay-pane svg,
+#map .leaflet-overlay-pane canvas {
+  position: absolute !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+#map .leaflet-control-container {
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+}
+#map .leaflet-control {
+  pointer-events: auto !important;
 }
