@@ -15,12 +15,40 @@ const $ = id => document.getElementById(id);
 const map = L.map("map", { zoomControl: false }).setView([56, -106], 4);
 L.control.zoom({ position: "topright" }).addTo(map);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
+  keepBuffer: 4,
+  updateWhenIdle: false,
+  updateWhenZooming: true,
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
-trackLine = L.polyline([], { color: "#1976d2", weight: 5 }).addTo(map);
+tileLayer.on("tileerror", event => {
+  setTimeout(() => {
+    if (event.tile && event.tile.src) {
+      const src = event.tile.src;
+      event.tile.src = "";
+      event.tile.src = src;
+    }
+  }, 500);
+});
+
+trackLine = L.polyline([], {
+  color: "#1976d2",
+  weight: 6,
+  opacity: 0.95,
+  lineCap: "round",
+  lineJoin: "round",
+  smoothFactor: 1
+}).addTo(map);
+
+function refreshMapSize() {
+  setTimeout(() => map.invalidateSize({ pan: false, animate: false }), 50);
+  setTimeout(() => map.invalidateSize({ pan: false, animate: false }), 300);
+}
+
+window.addEventListener("resize", refreshMapSize);
+window.addEventListener("orientationchange", refreshMapSize);
 
 const dbRequest = indexedDB.open("GPSTrackerDB", 2);
 
@@ -163,7 +191,9 @@ function recoverActiveTrack() {
 function drawCurrentTrack() {
   const coords = currentTrack.map(p => [p.lat, p.lon]);
   trackLine.setLatLngs(coords);
-  if (coords.length) map.fitBounds(trackLine.getBounds(), { padding: [25, 25] });
+  trackLine.bringToFront();
+  refreshMapSize();
+  if (coords.length > 1) map.fitBounds(trackLine.getBounds(), { padding: [25, 25] });
 }
 
 function updateStats(point) {
@@ -257,7 +287,9 @@ function receivePosition(position) {
   }
 
   trackLine.addLatLng([p.lat, p.lon]);
+  trackLine.bringToFront();
   map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15), { animate: false });
+  refreshMapSize();
 
   updateStats(p);
   saveActive();
@@ -356,12 +388,15 @@ function showTrack(track) {
   startTime = track.startedAt;
 
   trackLine.setLatLngs(currentTrack.map(p => [p.lat, p.lon]));
+  trackLine.bringToFront();
+  refreshMapSize();
   if (positionMarker) {
     map.removeLayer(positionMarker);
     positionMarker = null;
   }
 
   if (currentTrack.length) {
+    refreshMapSize();
     const last = currentTrack.at(-1);
     positionMarker = L.circleMarker([last.lat, last.lon], {
       radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillOpacity: 1
