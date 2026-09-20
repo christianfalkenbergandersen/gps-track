@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#1976d2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GPS Track">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQ3B3cN2nqW7a0mQ5qJf2rR1lJ2cQ8="
+        crossorigin="">
+  <link rel="stylesheet" href="style.css">
+  <title>GPS Track</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">GPS Track</div>
+    <div id="statusPill" class="status-pill stopped"><span class="dot"></span><span id="statusText">STOPPED</span></div>
+  </header>
+
+  <main>
+    <section class="map-wrap">
+      <div id="map"></div>
+      <div id="offlineNotice" class="offline-notice hidden">Offline — GPS recording is still available.</div>
+    </section>
+
+    <section class="stats" aria-label="Track statistics">
+      <div class="stat"><span>Distance</span><strong id="distance">0.00 km</strong></div>
+      <div class="stat"><span>Time</span><strong id="elapsed">00:00:00</strong></div>
+      <div class="stat"><span>Speed</span><strong id="speed">0.0 km/h</strong></div>
+      <div class="stat"><span>GPS accuracy</span><strong id="accuracy">—</strong></div>
+      <div class="stat"><span>Points</span><strong id="points">0</strong></div>
+    </section>
+
+    <section class="controls">
+      <button id="startButton" class="start">START</button>
+      <button id="stopButton" class="stop" disabled>STOP</button>
+    </section>
+
+    <section class="saved">
+      <div class="section-heading">
+        <h2>Saved Tracks</h2>
+        <button id="clearAllButton" class="small-button">Clear all</button>
+      </div>
+      <div id="trackList" class="track-list">No saved tracks</div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
