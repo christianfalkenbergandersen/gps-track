@@ -49,11 +49,13 @@ main { max-width: 900px; margin: 0 auto; }
 .map-wrap {
   position: relative;
   background: #dfe5ea;
+  z-index: 1;
 }
 
+/* Large map, but leave room for the stats and START/STOP controls. */
 #map {
-  height: 58vh;
-  min-height: 390px;
+  height: min(600px, calc(100svh - 310px));
+  min-height: 340px;
   width: 100%;
 }
 
@@ -72,16 +74,16 @@ main { max-width: 900px; margin: 0 auto; }
 .hidden { display: none; }
 
 .stats {
-  margin: -18px 12px 0;
+  margin: 0 12px;
   position: relative;
-  z-index: 1100;
+  z-index: 2;
   background: var(--card);
   border-radius: 20px;
-  padding: 15px 10px;
+  padding: 12px 10px;
   box-shadow: 0 3px 18px rgba(0,0,0,.14);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px 4px;
+  gap: 10px 4px;
 }
 
 .stat { text-align: center; border-right: 1px solid #e3e7eb; }
@@ -92,7 +94,10 @@ main { max-width: 900px; margin: 0 auto; }
 .controls {
   display: flex;
   gap: 12px;
-  padding: 14px 12px;
+  padding: 10px 12px 14px;
+  position: relative;
+  z-index: 3;
+  background: var(--bg);
 }
 
 .controls button {
@@ -149,7 +154,11 @@ main { max-width: 900px; margin: 0 auto; }
 }
 
 @media (max-width: 430px) {
-  #map { height: 56vh; min-height: 360px; }
+  #map {
+    height: min(600px, calc(100svh - 300px));
+    min-height: 340px;
+  }
+
   .stats { grid-template-columns: repeat(3, 1fr); }
   .stat strong { font-size: 15px; }
   .stat:nth-child(3n) { border-right: 0; }
