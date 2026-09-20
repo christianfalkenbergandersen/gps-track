@@ -1,4 +1,4 @@
-const CACHE = "gps-track-v6";
+const CACHE = "gps-track-v7";
 const SHELL = [
   "./",
   "./index.html",
