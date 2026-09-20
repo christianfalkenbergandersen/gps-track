@@ -1,11 +1,10 @@
-const CACHE = "gps-track-v5";
+const CACHE = "gps-track-v6";
 const SHELL = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
-  "./manifest.json",
-  "./icon-192.png"
+  "./manifest.json"
 ];
 
 self.addEventListener("install", event => {
