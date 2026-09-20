@@ -8,11 +8,11 @@ let lastPointTime = null;
 let timerId = null;
 let positionMarker = null;
 let trackLine = null;
+let locationCentered = false;
 
 const $ = id => document.getElementById(id);
 
 const map = L.map("map", { zoomControl: false }).setView([56, -106], 4);
-
 L.control.zoom({ position: "topright" }).addTo(map);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -38,6 +38,7 @@ dbRequest.onsuccess = event => {
   db = event.target.result;
   loadTracks();
   recoverActiveTrack();
+  locateBeforeTracking();
 };
 
 dbRequest.onerror = () => setStatus("Database error", false);
@@ -56,7 +57,7 @@ function formatElapsed(ms) {
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  return [h, m, s].map((v, i) => i === 0 ? String(v).padStart(2, "0") : String(v).padStart(2, "0")).join(":");
+  return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
 }
 
 function haversine(a, b) {
@@ -68,6 +69,54 @@ function haversine(a, b) {
   const x = Math.sin(dp / 2) ** 2 +
             Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
   return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+function locateBeforeTracking() {
+  if (!navigator.geolocation) {
+    setStatus("GPS unavailable", false);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const p = {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      };
+
+      if (!Number.isFinite(p.lat) || !Number.isFinite(p.lon)) return;
+
+      locationCentered = true;
+      map.setView([p.lat, p.lon], 16, { animate: false });
+
+      if (!positionMarker) {
+        positionMarker = L.circleMarker([p.lat, p.lon], {
+          radius: 8,
+          weight: 3,
+          color: "#fff",
+          fillColor: "#1976d2",
+          fillOpacity: 1
+        }).addTo(map);
+      } else {
+        positionMarker.setLatLng([p.lat, p.lon]);
+      }
+
+      $("accuracy").textContent =
+        p.accuracy != null ? `±${Math.round(p.accuracy)} m` : "—";
+    },
+    error => {
+      // The map can remain at its normal overview if location permission
+      // has not been granted or the GPS is temporarily unavailable.
+      const messages = {
+        1: "Location permission needed",
+        2: "Location unavailable",
+        3: "GPS timeout"
+      };
+      setStatus(messages[error.code] || "GPS unavailable", false);
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+  );
 }
 
 function saveActive() {
@@ -193,7 +242,6 @@ function receivePosition(position) {
     const dt = Math.max(0.001, (p.time - previous.time) / 1000);
 
     if (d > 1000 && dt < 20) return;
-
     if (d >= 3 || dt >= 10) currentDistance += d;
   }
 
