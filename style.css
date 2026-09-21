@@ -52,8 +52,8 @@ main { max-width: 900px; margin: 0 auto; }
 }
 
 #map {
-  height: 58vh;
-  min-height: 390px;
+  height: 56vh;
+  min-height: 360px;
   width: 100%;
 }
 
@@ -149,10 +149,8 @@ main { max-width: 900px; margin: 0 auto; }
 }
 
 @media (max-width: 430px) {
-  #map { height: 56vh; min-height: 360px; }
-  .stats { grid-template-columns: repeat(3, 1fr); }
+  #map { height: 55vh; min-height: 360px; }
   .stat strong { font-size: 15px; }
-  .stat:nth-child(3n) { border-right: 0; }
 }
 
 @media (min-width: 700px) {
