@@ -291,7 +291,9 @@ function showTrack(track) {
 
   if (currentTrack.length) {
     const last = currentTrack.at(-1);
-    showPosition({coords: last}, false);
+    positionMarker = L.circleMarker([last.lat, last.lon], {
+      radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillOpacity: 1
+    }).addTo(map);
     map.fitBounds(trackLine.getBounds(), { padding: [25, 25] });
     updateStats(last);
   }
@@ -348,3 +350,9 @@ dbRequest.onerror = () => setStatus("Database error");
 
 updateOnlineState();
 initialLocation();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => registration.unregister());
+  });
+}
