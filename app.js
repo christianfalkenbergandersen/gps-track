@@ -8,47 +8,19 @@ let lastPointTime = null;
 let timerId = null;
 let positionMarker = null;
 let trackLine = null;
-let locationCentered = false;
 
 const $ = id => document.getElementById(id);
 
 const map = L.map("map", { zoomControl: false }).setView([56, -106], 4);
+
 L.control.zoom({ position: "topright" }).addTo(map);
 
-const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
-  keepBuffer: 4,
-  updateWhenIdle: false,
-  updateWhenZooming: true,
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
-tileLayer.on("tileerror", event => {
-  setTimeout(() => {
-    if (event.tile && event.tile.src) {
-      const src = event.tile.src;
-      event.tile.src = "";
-      event.tile.src = src;
-    }
-  }, 500);
-});
-
-trackLine = L.polyline([], {
-  color: "#1976d2",
-  weight: 6,
-  opacity: 0.95,
-  lineCap: "round",
-  lineJoin: "round",
-  smoothFactor: 1
-}).addTo(map);
-
-function refreshMapSize() {
-  setTimeout(() => map.invalidateSize({ pan: false, animate: false }), 50);
-  setTimeout(() => map.invalidateSize({ pan: false, animate: false }), 300);
-}
-
-window.addEventListener("resize", refreshMapSize);
-window.addEventListener("orientationchange", refreshMapSize);
+trackLine = L.polyline([], { color: "#1976d2", weight: 5 }).addTo(map);
 
 const dbRequest = indexedDB.open("GPSTrackerDB", 2);
 
@@ -66,7 +38,6 @@ dbRequest.onsuccess = event => {
   db = event.target.result;
   loadTracks();
   recoverActiveTrack();
-  locateBeforeTracking();
 };
 
 dbRequest.onerror = () => setStatus("Database error", false);
@@ -83,9 +54,9 @@ function formatDistance(m) {
 function formatElapsed(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
+  const m = Math.floor(total % 3600) / 60);
   const s = total % 60;
-  return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+  return [h, m, s].map(v, i) => i === 0 ? String(v).padStart(2, "0") : String(v).padStart(2, "0")).oin(":");
 }
 
 function haversine(a, b) {
@@ -97,54 +68,6 @@ function haversine(a, b) {
   const x = Math.sin(dp / 2) ** 2 +
             Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
   return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-}
-
-function locateBeforeTracking() {
-  if (!navigator.geolocation) {
-    setStatus("GPS unavailable", false);
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    position => {
-      const p = {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude,
-        accuracy: position.coords.accuracy
-      };
-
-      if (!Number.isFinite(p.lat) || !Number.isFinite(p.lon)) return;
-
-      locationCentered = true;
-      map.setView([p.lat, p.lon], 16, { animate: false });
-
-      if (!positionMarker) {
-        positionMarker = L.circleMarker([p.lat, p.lon], {
-          radius: 8,
-          weight: 3,
-          color: "#fff",
-          fillColor: "#1976d2",
-          fillOpacity: 1
-        }).addTo(map);
-      } else {
-        positionMarker.setLatLng([p.lat, p.lon]);
-      }
-
-      $("accuracy").textContent =
-        p.accuracy != null ? `±${Math.round(p.accuracy)} m` : "—";
-    },
-    error => {
-      // The map can remain at its normal overview if location permission
-      // has not been granted or the GPS is temporarily unavailable.
-      const messages = {
-        1: "Location permission needed",
-        2: "Location unavailable",
-        3: "GPS timeout"
-      };
-      setStatus(messages[error.code] || "GPS unavailable", false);
-    },
-    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
-  );
 }
 
 function saveActive() {
@@ -191,9 +114,7 @@ function recoverActiveTrack() {
 function drawCurrentTrack() {
   const coords = currentTrack.map(p => [p.lat, p.lon]);
   trackLine.setLatLngs(coords);
-  trackLine.bringToFront();
-  refreshMapSize();
-  if (coords.length > 1) map.fitBounds(trackLine.getBounds(), { padding: [25, 25] });
+  if (coords.length) map.fitBounds(trackLine.getBounds(), { padding: [25, 25] });
 }
 
 function updateStats(point) {
@@ -219,6 +140,7 @@ function startTracking() {
     return;
   }
 
+  // If a recovered track exists, continue it; otherwise start fresh.
   if (currentTrack.length === 0) {
     currentDistance = 0;
     startTime = Date.now();
@@ -271,7 +193,10 @@ function receivePosition(position) {
     const d = haversine(previous, p);
     const dt = Math.max(0.001, (p.time - previous.time) / 1000);
 
+    // Reject obvious GPS jumps. A fast real-world move is still allowed.
     if (d > 1000 && dt < 20) return;
+
+    // Suppress very small GPS jitter while stopped.
     if (d >= 3 || dt >= 10) currentDistance += d;
   }
 
@@ -280,16 +205,14 @@ function receivePosition(position) {
 
   if (!positionMarker) {
     positionMarker = L.circleMarker([p.lat, p.lon], {
-      radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillOpacity: 1
+      radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillopacity: 1
     }).addTo(map);
   } else {
     positionMarker.setLatLng([p.lat, p.lon]);
   }
 
   trackLine.addLatLng([p.lat, p.lon]);
-  trackLine.bringToFront();
   map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15), { animate: false });
-  refreshMapSize();
 
   updateStats(p);
   saveActive();
@@ -388,15 +311,12 @@ function showTrack(track) {
   startTime = track.startedAt;
 
   trackLine.setLatLngs(currentTrack.map(p => [p.lat, p.lon]));
-  trackLine.bringToFront();
-  refreshMapSize();
   if (positionMarker) {
     map.removeLayer(positionMarker);
     positionMarker = null;
   }
 
   if (currentTrack.length) {
-    refreshMapSize();
     const last = currentTrack.at(-1);
     positionMarker = L.circleMarker([last.lat, last.lon], {
       radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillOpacity: 1

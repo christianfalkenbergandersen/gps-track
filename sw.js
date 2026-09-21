@@ -1,10 +1,13 @@
-const CACHE = "gps-track-v7";
+const CACHE = "gps-track-v2";
 const SHELL = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
-  "./manifest.json"
+  "./manifest.json",
+  "./icon-192.png",
+  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 ];
 
 self.addEventListener("install", event => {
@@ -25,19 +28,14 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET") return;
 
-  // Never substitute index.html for failed map tiles or other external resources.
-  // That was causing broken/missing OpenStreetMap tiles to remain blank.
-  if (new URL(request.url).origin !== location.origin) {
-    event.respondWith(fetch(request));
-    return;
-  }
-
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
 
       return fetch(request).then(response => {
-        if (response.ok) {
+        // Cache successful same-origin app resources. Do not try to cache
+        // map tiles or aribtrary opaque cross-origin responses.
+        if (response.ok && new URL(request.url).origin === location.origin) {
           const copy = response.clone();
           caches.open(CACHE).then(cache => cache.put(request, copy));
         }
