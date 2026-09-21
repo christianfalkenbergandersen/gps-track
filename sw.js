@@ -34,7 +34,7 @@ self.addEventListener("fetch", event => {
 
       return fetch(request).then(response => {
         // Cache successful same-origin app resources. Do not try to cache
-        // map tiles or aribtrary opaque cross-origin responses.
+        // map tiles or arbitrary opaque cross-origin responses.
         if (response.ok && new URL(request.url).origin === location.origin) {
           const copy = response.clone();
           caches.open(CACHE).then(cache => cache.put(request, copy));
