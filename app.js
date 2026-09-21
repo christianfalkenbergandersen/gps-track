@@ -44,19 +44,20 @@ function averageSpeedKmh() {
   return currentDistance / elapsedSeconds * 3.6;
 }
 
-function updateStats(point) {
+function updateStats(point, instantaneousSpeedKmh = null) {
   $("distance").textContent = formatDistance(currentDistance);
   $("points").textContent = currentTrack.length;
   $("accuracy").textContent = point?.accuracy != null ? `±${Math.round(point.accuracy)} m` : "—";
   $("averageSpeed").textContent = `${averageSpeedKmh().toFixed(1)} km/h`;
-  $("speed").textContent = point?.speed != null && point.speed >= 0 ? `${(point.speed * 3.6).toFixed(1)} km/h` : "—";
+  $("speed").textContent = instantaneousSpeedKmh != null
+    ? `${instantaneousSpeedKmh.toFixed(1)} km/h`
+    : "0.0 km/h";
 }
 
 function updateTimer() {
   if (startTime != null) {
     $("elapsed").textContent = formatElapsed(Date.now() - startTime);
     $("averageSpeed").textContent = `${averageSpeedKmh().toFixed(1)} km/h`;
-    if (!tracking) $("speed").textContent = "—";
   }
 }
 
@@ -86,7 +87,7 @@ function recoverActiveTrack() {
       currentDistance = saved.distance;
       startTime = saved.startedAt;
       drawCurrentTrack();
-      updateStats(currentTrack.at(-1));
+      updateStats(currentTrack.at(-1), 0);
       setStatus("Recovered — press START to continue");
     } else {
       clearActive();
@@ -150,9 +151,11 @@ function receivePosition(position) {
   if (!p) return;
 
   if (p.accuracy > 75) {
-    updateStats(p);
+    updateStats(p, 0);
     return;
   }
+
+  let instantaneousSpeedKmh = 0;
 
   if (currentTrack.length) {
     const previous = currentTrack.at(-1);
@@ -162,13 +165,21 @@ function receivePosition(position) {
     if (d > 1000 && dt < 20) return;
 
     if (d >= 3 || dt >= 10) currentDistance += d;
+
+    if (p.speed != null && Number.isFinite(p.speed) && p.speed >= 0) {
+      instantaneousSpeedKmh = p.speed * 3.6;
+    } else if (d >= 3 && dt > 0) {
+      instantaneousSpeedKmh = d / dt * 3.6;
+    }
+  } else if (p.speed != null && Number.isFinite(p.speed) && p.speed >= 0) {
+    instantaneousSpeedKmh = p.speed * 3.6;
   }
 
   currentTrack.push(p);
   trackLine.addLatLng([p.lat, p.lon]);
   map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15), { animate: false });
 
-  updateStats(p);
+  updateStats(p, instantaneousSpeedKmh);
   saveActive();
 }
 
@@ -194,6 +205,7 @@ function startTracking() {
   tracking = true;
   $("startButton").disabled = true;
   $("stopButton").disabled = false;
+  $("speed").textContent = "0.0 km/h";
   setStatus("Tracking", true);
 
   clearInterval(timerId);
@@ -218,6 +230,7 @@ function stopTracking() {
 
   $("startButton").disabled = false;
   $("stopButton").disabled = true;
+  $("speed").textContent = "0.0 km/h";
   setStatus("Stopped");
 
   if (currentTrack.length > 1 && db) {
@@ -297,7 +310,7 @@ function showTrack(track) {
       radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillOpacity: 1
     }).addTo(map);
     map.fitBounds(trackLine.getBounds(), { padding: [25, 25] });
-    updateStats(last);
+    updateStats(last, 0);
   }
 
   $("elapsed").textContent = formatElapsed((track.endedAt || Date.now()) - track.startedAt);
