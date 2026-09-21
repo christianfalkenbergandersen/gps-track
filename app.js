@@ -54,9 +54,9 @@ function formatDistance(m) {
 function formatElapsed(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(total / 3600);
-  const m = Math.floor(total % 3600) / 60);
+  const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  return [h, m, s].map(v, i) => i === 0 ? String(v).padStart(2, "0") : String(v).padStart(2, "0")).oin(":");
+  return [h, m, s].map((v, i) => i === 0 ? String(v).padStart(2, "0") : String(v).padStart(2, "0")).join(":");
 }
 
 function haversine(a, b) {
@@ -205,7 +205,7 @@ function receivePosition(position) {
 
   if (!positionMarker) {
     positionMarker = L.circleMarker([p.lat, p.lon], {
-      radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillopacity: 1
+      radius: 8, weight: 3, color: "#fff", fillColor: "#1976d2", fillOpacity: 1
     }).addTo(map);
   } else {
     positionMarker.setLatLng([p.lat, p.lon]);
