@@ -49,12 +49,14 @@ function updateStats(point) {
   $("points").textContent = currentTrack.length;
   $("accuracy").textContent = point?.accuracy != null ? `±${Math.round(point.accuracy)} m` : "—";
   $("averageSpeed").textContent = `${averageSpeedKmh().toFixed(1)} km/h`;
+  $("speed").textContent = point?.speed != null && point.speed >= 0 ? `${(point.speed * 3.6).toFixed(1)} km/h` : "—";
 }
 
 function updateTimer() {
   if (startTime != null) {
     $("elapsed").textContent = formatElapsed(Date.now() - startTime);
     $("averageSpeed").textContent = `${averageSpeedKmh().toFixed(1)} km/h`;
+    if (!tracking) $("speed").textContent = "—";
   }
 }
 
